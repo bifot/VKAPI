@@ -9,6 +9,7 @@ class Bot {
 		self.accessTokens = access_tokens;
 		self.methodQueue = [];
 		self.lastToken = 0;
+        self.request = request;
 		self.longPollParams = false;
 		self.messageCallBack = Function();
 		self.lastServers = {};
