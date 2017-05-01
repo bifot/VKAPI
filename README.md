@@ -36,7 +36,7 @@ Bot.onMessagesListener(function(message) {
 
 Upload Docs
 ------
-```
+```javascript
 let group_id = 1;
 let file = 'image.jpg';
 docsWallUploadServer(group_id, file, function(docs) {
