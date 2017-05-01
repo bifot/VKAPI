@@ -1,5 +1,7 @@
 const request = require('tiny_request');
 const fs = require('fs');
+const mime = require('mime');
+const path = require('path');
 
 class Bot {
 
@@ -9,7 +11,6 @@ class Bot {
 		self.accessTokens = access_tokens;
 		self.methodQueue = [];
 		self.lastToken = 0;
-        self.request = request;
 		self.longPollParams = false;
 		self.messageCallBack = Function();
 		self.lastServers = {};
@@ -17,6 +18,77 @@ class Bot {
             self.execute();
         }, Math.ceil(1000 / (self.accessTokens.length * 3)) + 50);
 	}
+
+    docsMessagesUploadServer(group_id, file, callback, attempt) {
+        var self = this;
+        attempt = attempt || 0;
+        attempt++;
+        if (attempt > 5) {
+            callback(false);
+            return;
+        }
+        let key = 'docsGetWallUploadServer' + group_id;
+        self.docsGetWallUploadServer(group_id, function(upload_url) {
+            if (!upload_url) {
+                self.docsGetWallUploadServer(group_id, file, callback, attempt);
+                return;
+            }
+            let data = {
+                file: {
+                    value: fs.createReadStream(file),
+                    filename: path.basename(file),
+                    contentType: mime.lookup(file)
+                }
+            }
+            request.post({url: upload_url, multipart: data, json: true}, function(body, response, err){
+                if (!err && response.statusCode == 200 && body.file) {
+                    self.api('docs.save', body, function(upload_result) {
+                        if (upload_result && upload_result.length == 1) {
+                            callback(upload_result[0]);
+                            return;
+                        } else {
+                            if (self.lastServers[key]) {
+                                delete self.lastServers[key];
+                            }
+                            self.docsGetWallUploadServer(group_id, file, callback, attempt);
+                        }
+                    });
+                } else {
+                    if (self.lastServers[key]) {
+                        delete self.lastServers[key];
+                    }
+                    self.docsGetWallUploadServer(group_id, file, callback, attempt);
+                }
+            });
+        });
+    }
+
+    docsGetWallUploadServer(group_id, callback, attempt) {
+        attempt = attempt || 0;
+        attempt++;
+        if (attempt > 5) {
+            callback(false);
+            return;
+        }
+        var self = this;
+        let key = 'docsGetWallUploadServer' + group_id;
+        if (Object.keys(self.lastServers).length >= 5000) {
+            self.lastServers = {};
+        }
+        if (self.lastServers[key]) {
+            callback(self.lastServers[key]);
+            return;
+        }
+        self.api('docs.getWallUploadServer', {group_id: group_id, type: 'audio_message'}, function(data) {
+            if (data && data.upload_url) {
+                self.lastServers[key] = data.upload_url;
+                callback(data.upload_url);
+            } else {
+                self.docsGetWallUploadServer(group_id, callback, attempt);
+            }
+        });
+    }
+
 
 	longPoll() {
 		var self = this;
