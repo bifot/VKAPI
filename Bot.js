@@ -19,7 +19,7 @@ class Bot {
         }, Math.ceil(1000 / (self.accessTokens.length * 3)) + 50);
 	}
 
-    docsMessagesUploadServer(group_id, file, callback, attempt) {
+    docsWallUploadServer(group_id, file, callback, attempt) {
         var self = this;
         attempt = attempt || 0;
         attempt++;
@@ -30,7 +30,7 @@ class Bot {
         let key = 'docsGetWallUploadServer' + group_id;
         self.docsGetWallUploadServer(group_id, function(upload_url) {
             if (!upload_url) {
-                self.docsGetWallUploadServer(group_id, file, callback, attempt);
+                self.docsWallUploadServer(group_id, file, callback, attempt);
                 return;
             }
             let data = {
@@ -50,14 +50,14 @@ class Bot {
                             if (self.lastServers[key]) {
                                 delete self.lastServers[key];
                             }
-                            self.docsGetWallUploadServer(group_id, file, callback, attempt);
+                            self.docsWallUploadServer(group_id, file, callback, attempt);
                         }
                     });
                 } else {
                     if (self.lastServers[key]) {
                         delete self.lastServers[key];
                     }
-                    self.docsGetWallUploadServer(group_id, file, callback, attempt);
+                    self.docsWallUploadServer(group_id, file, callback, attempt);
                 }
             });
         });
