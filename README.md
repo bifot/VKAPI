@@ -43,6 +43,6 @@ const group_id = 1
 const file = 'image.jpg'
 
 docsWallUploadServer(group_id, file, (docs) => {
-	console.log(docs) // Docs Object
+  console.log(docs) // Docs Object
 })
 ```
